@@ -1,0 +1,28 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: celestial-art-portfolio
+  annotations:
+    # 1. Scaling to zero when idle (No cost during downtime)
+    autoscaling.knative.dev/minScale: "0"
+    autoscaling.knative.dev/maxScale: "10"
+    # 2. Fast startup boost
+    run.googleapis.com/startup-cpu-boost: "true"
+spec:
+  template:
+    metadata:
+      annotations:
+        # 4. CPU is only allocated during request processing (Cost effective)
+        run.googleapis.com/cpu-throttling: "true"
+    spec:
+      # 5. Higher concurrency to handle more users per instance
+      containerConcurrency: 80
+      containers:
+      - image: gcr.io/PROJECT_ID/IMAGE_NAME
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            # We kept original resource levels as requested (Exception #3)
+            cpu: 1000m
+            memory: 512Mi

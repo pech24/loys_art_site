@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "VerifiedArtwork": {
+      "title": "Verified Artwork",
+      "description": "A verified artwork record for the Certificate of Authenticity.",
+      "type": "object",
+      "properties": {
+        "artworkId": { "type": "string", "description": "Unique ID for the artwork (e.g., LYS-2026-001)" },
+        "title": { "type": "string", "description": "Title of the artwork" },
+        "imageUrl": { "type": "string", "description": "URL to the high-res image" },
+        "artist": { "type": "string", "description": "Name of the artist (default: Loys)" },
+        "creationDate": { "type": "string", "description": "Date of creation" },
+        "commissioner": { "type": "string", "description": "Name of the commissioner" },
+        "status": { "type": "string", "enum": ["Commissioned", "Personal Work"] },
+        "characterName": { "type": "string" },
+        "commissionType": { "type": "string" },
+        "medium": { "type": "string" },
+        "resolution": { "type": "string" },
+        "aspectRatio": { "type": "string" },
+        "uniqueCommission": { "type": "string" },
+        "oneOfOne": { "type": "string" },
+        "commercialRights": { "type": "string" },
+        "reproductionLimit": { "type": "string" },
+        "originalOwner": { "type": "string" },
+        "transferable": { "type": "string" },
+        "timelapseUrl": { "type": "string" },
+        "referenceUrl": { "type": "string" },
+        "processImages": { "type": "string", "description": "Semicolon separated URLs" }
+      },
+      "required": ["artworkId", "title", "imageUrl", "artist", "creationDate", "commissioner", "status"]
+    },
+    "GalleryArtwork": {
+      "title": "Gallery Artwork",
+      "description": "An artwork entry for the public gallery.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string", "enum": ["Portraits", "Full Body", "Scenes", "Chibi"] },
+        "imageUrl": { "type": "string" },
+        "lore": { "type": "string" },
+        "timeTaken": { "type": "string" },
+        "tools": { "type": "string", "description": "Comma separated tools" },
+        "canvasSize": { "type": "string" },
+        "order": { "type": "number", "description": "Display order" }
+      },
+      "required": ["title", "category", "imageUrl"]
+    }
+  },
+  "firestore": {
+    "/verified_artworks/{artworkId}": {
+      "schema": "VerifiedArtwork",
+      "description": "Collection of verified artworks for COA."
+    },
+    "/gallery": {
+      "schema": "GalleryArtwork",
+      "description": "Collection of artworks for the public gallery."
+    }
+  }
+}

@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email in ["pechonloise36@gmail.com", "darlene.quinagon@gmail.com"]);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Verified Artworks: Publicly readable for verification, only Admin can write
+    match /verified_artworks/{artworkId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Gallery: Publicly readable, only Admin can write
+    match /gallery/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #FDF8F1;
+  --color-deep-red: #C63D3D;
+  --color-gold: #D4AF37;
+  --color-ink: #1A1A1A;
+  --color-void: #0A0A0A;
+  
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'Inter', sans-serif;
+}
+
+@layer base {
+  html {
+    font-size: 14px;
+    scroll-behavior: smooth;
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
+  body {
+    @apply bg-cream text-ink font-sans;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+.btn-celestial {
+  @apply bg-deep-red text-white border-2 border-gold px-5 py-1.5 rounded-full font-bold transition-all hover:scale-105 hover:shadow-lg active:scale-95;
+}
+
+.btn-hero-primary {
+  @apply bg-deep-red text-white border-[3px] border-gold px-12 py-5 rounded-full font-black transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] active:scale-95 uppercase tracking-[0.2em] text-sm;
+}
+
+.btn-hero-secondary {
+  @apply bg-void/40 backdrop-blur-md text-white border-[3px] border-white/30 px-12 py-5 rounded-full font-black transition-all hover:bg-white/10 hover:border-white hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] active:scale-95 uppercase tracking-[0.2em] text-sm;
+}
+
+.section-cream {
+  @apply bg-cream py-10 md:py-16 px-4 md:px-6;
+}
+
+.section-white {
+  @apply bg-white py-10 md:py-16 px-4 md:px-6;
+}
+
+.aesthetic-gold-frame {
+  @apply relative p-1 bg-white border-2 border-gold shadow-[0_0_0_4px_white,0_0_0_6px_#D4AF37];
+}
+
+.aesthetic-gold-frame::before,
+.aesthetic-gold-frame::after {
+  content: '';
+  @apply absolute w-10 h-10 border-gold z-10;
+}
+
+.aesthetic-gold-frame::before {
+  @apply top-[-8px] left-[-8px] border-t-4 border-l-4;
+}
+
+.aesthetic-gold-frame::after {
+  @apply bottom-[-8px] right-[-8px] border-b-4 border-r-4;
+}
+
+.nav-link-celestial {
+  @apply text-white/90 hover:text-gold transition-colors duration-300 font-normal text-base md:text-lg uppercase tracking-wider;
+}
+
+.nav-link-celestial.active {
+  @apply text-gold;
+}
+
+.glass-panel {
+  @apply bg-white/90 backdrop-blur-sm border border-gold/20 rounded-2xl shadow-lg;
+}
+
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.vignette-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.8) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hologram-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.hologram-effect::after {
+  content: "";
+  position: absolute;
+  inset: -100%;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(212, 175, 55, 0.1) 45%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(198, 61, 61, 0.1) 55%,
+    rgba(255, 255, 255, 0) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(25deg);
+  animation: hologram 6s infinite linear;
+  pointer-events: none;
+}
+
+.hologram-text {
+  animation: hologram-text-shimmer 3s infinite linear;
+  background-size: 200% auto;
+}
+
+@keyframes hologram-text-shimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes hologram {
+  0% { transform: translateX(-100%) rotate(25deg); }
+  100% { transform: translateX(100%) rotate(25deg); }
+}
+
+.gia-report {
+  @apply bg-white border border-gray-200 shadow-2xl rounded-none;
+  font-family: 'Inter', sans-serif;
+}
+
+.gia-section-title {
+  @apply bg-deep-red text-white font-serif text-sm md:text-base py-1 px-3 mb-4 uppercase tracking-widest font-bold flex items-center;
+}
+
+.gia-cross-hatch {
+  background-image: 
+    repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.04) 10px, rgba(0, 0, 0, 0.04) 11px),
+    repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.04) 10px, rgba(0, 0, 0, 0.04) 11px);
+}
+
+.gia-label {
+  @apply text-ink/40 text-[10px] uppercase tracking-widest font-bold;
+}
+
+.gia-value {
+  @apply text-ink font-medium text-sm md:text-base;
+}
