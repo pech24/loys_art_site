@@ -1,69 +1,60 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Search, QrCode, ShieldCheck, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
-import { VerifiedArtwork } from '../types';
-import { db } from '../firebase';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { Search, QrCode, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
+import { verifyArtwork } from '../lib/api';
+import TurnstileWidget, { type TurnstileHandle } from '../components/TurnstileWidget';
 
 const VerificationPage: React.FC = () => {
   const [artworkId, setArtworkId] = useState('');
   const [result, setResult] = useState<'not_found' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isQrLoading, setIsQrLoading] = useState(false);
-  const [isDbLoading, setIsDbLoading] = useState(true);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const qrInputRef = useRef<HTMLInputElement>(null);
+  const turnstileRef = useRef<TurnstileHandle>(null);
   const hasAutoVerified = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleVerification = useCallback(async (idToVerify: string, isAuto: boolean = false) => {
+  const handleVerification = useCallback(async (idToVerify: string) => {
     if (!idToVerify) return;
     setIsLoading(true);
     setResult(null);
+    setVerifyError(null);
+
+    const token = turnstileRef.current?.getToken();
+    if (!token) {
+      setVerifyError('Please complete the security check below.');
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      // Direct fetch from Firestore for the specific ID
-      const docRef = doc(db, 'verified_artworks', idToVerify);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const foundArtwork = { artworkId: docSnap.id, ...docSnap.data() } as VerifiedArtwork;
+      const foundArtwork = await verifyArtwork(idToVerify.trim(), token);
+      if (foundArtwork) {
         navigate('/certificate', { state: { artwork: foundArtwork } });
       } else {
-        // Try case-insensitive search if direct ID fails
-        const q = query(
-          collection(db, 'verified_artworks'),
-          where('artworkId', '==', idToVerify)
-        );
-        const querySnap = await getDocs(q);
-        
-        if (!querySnap.empty) {
-          const foundArtwork = { artworkId: querySnap.docs[0].id, ...querySnap.docs[0].data() } as VerifiedArtwork;
-          navigate('/certificate', { state: { artwork: foundArtwork } });
-        } else {
-          setResult('not_found');
-        }
+        setResult('not_found');
       }
     } catch (error) {
-      console.error("Verification error:", error);
+      console.error('Verification error:', error);
+      setVerifyError(error instanceof Error ? error.message : 'Verification failed');
       setResult('not_found');
     } finally {
       setIsLoading(false);
+      turnstileRef.current?.reset();
     }
   }, [navigate]);
 
-  // Handle query parameters on load
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const idFromUrl = params.get('id');
-    
     if (idFromUrl && !hasAutoVerified.current) {
       hasAutoVerified.current = true;
       setArtworkId(idFromUrl);
-      handleVerification(idFromUrl, true);
     }
-  }, [location.search, handleVerification]);
+  }, [location.search]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,26 +80,20 @@ const VerificationPage: React.FC = () => {
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0, img.width, img.height);
             const imageData = ctx.getImageData(0, 0, img.width, img.height);
-            
             const code = (window as any).jsQR?.(imageData.data, imageData.width, imageData.height);
 
             setIsQrLoading(false);
             if (code) {
                 let scannedData = code.data;
-                
-                // If the scanned data is a URL, try to extract the ID parameter
                 try {
                     const url = new URL(scannedData);
                     const idParam = url.searchParams.get('id');
-                    if (idParam) {
-                        scannedData = idParam;
-                    }
-                } catch (e) {
-                    // Not a URL, use raw data
+                    if (idParam) scannedData = idParam;
+                } catch {
+                    /* raw id */
                 }
-
                 setArtworkId(scannedData);
-                handleVerification(scannedData); 
+                handleVerification(scannedData);
             } else {
                 alert('No QR code found in the uploaded image.');
             }
@@ -122,22 +107,18 @@ const VerificationPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="text-center space-y-6 mb-16">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-gold/30 bg-gold/5 text-gold text-sm uppercase tracking-widest"
-        >
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-gold/30 bg-gold/5 text-gold text-sm uppercase tracking-widest">
           <ShieldCheck size={14} />
           <span>Certificate of Authenticity</span>
         </motion.div>
         <h1 className="text-5xl md:text-7xl font-serif text-deep-red">Art Verification</h1>
         <p className="text-ink/70 text-lg max-w-2xl mx-auto">
-          Enter an artwork's unique ID or upload its QR code to verify authenticity and ownership details within the portfolio.
+          Enter an artwork&apos;s unique ID or upload its QR code to verify authenticity.
         </p>
       </div>
 
       <div className="glass-panel p-8 md:p-12 relative overflow-hidden">
-        <div className="relative z-10 space-y-12">
+        <div className="relative z-10 space-y-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gold/50 group-focus-within:text-gold transition-colors">
@@ -149,11 +130,16 @@ const VerificationPage: React.FC = () => {
                 onChange={(e) => {
                   setArtworkId(e.target.value);
                   setResult(null);
+                  setVerifyError(null);
                 }}
-                placeholder="Enter Artwork ID (e.g., AV-SLW-WAR-001)"
-                className="w-full bg-white border border-ink/10 rounded-xl py-4 pl-12 pr-4 text-ink placeholder:text-ink/20 focus:outline-none focus:border-gold/50 focus:bg-white/10 transition-all font-mono"
+                placeholder="Enter Artwork ID (e.g., LYS-03052026-01)"
+                className="w-full bg-white border border-ink/10 rounded-xl py-4 pl-12 pr-4 text-ink placeholder:text-ink/20 focus:outline-none focus:border-gold/50 transition-all font-mono"
               />
             </div>
+
+            <TurnstileWidget ref={turnstileRef} onExpire={() => setVerifyError('Security check expired. Please verify again.')} />
+
+            {verifyError && <p className="text-sm text-deep-red text-center">{verifyError}</p>}
             
             <button
               type="submit"
@@ -187,17 +173,11 @@ const VerificationPage: React.FC = () => {
 
       <div className="mt-12 min-h-[100px]">
         {result === 'not_found' && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-panel p-8 border-deep-red/30 bg-deep-red/5 text-center space-y-4"
-          >
-            <div className="flex justify-center text-deep-red">
-              <AlertCircle size={48} />
-            </div>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-8 border-deep-red/30 bg-deep-red/5 text-center space-y-4">
+            <div className="flex justify-center text-deep-red"><AlertCircle size={48} /></div>
             <h3 className="text-2xl font-serif text-ink">Artwork Not Found</h3>
             <p className="text-ink/60">
-              The ID "<span className="font-mono text-gold">{artworkId}</span>" does not match any verified artwork in our archives. Please check the ID and try again.
+              The ID &quot;<span className="font-mono text-gold">{artworkId}</span>&quot; does not match any verified artwork in our archives.
             </p>
           </motion.div>
         )}

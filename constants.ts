@@ -65,73 +65,73 @@ export const commissionTerms = [
 
 export const galleryArtworks: Artwork[] = [
     { 
-      id: 1, 
+      id: '1', 
       title: "Starlight Warrior", 
       category: ArtworkCategory.FULL_ILLUSTRATION, 
       imageUrl: 'https://picsum.photos/seed/ffxiv-warrior/800/1200'
     },
     { 
-      id: 2, 
+      id: '2', 
       title: "Ethereal Conjurer", 
       category: ArtworkCategory.PORTRAIT, 
       imageUrl: 'https://picsum.photos/seed/ffxiv-mage/800/1000'
     },
     { 
-      id: 3, 
+      id: '3', 
       title: "Gridanian Vista", 
       category: ArtworkCategory.FULL_ILLUSTRATION, 
       imageUrl: 'https://picsum.photos/seed/ffxiv-scene/1200/800'
     },
     { 
-      id: 4, 
+      id: '4', 
       title: "Chibi Dragoon", 
       category: ArtworkCategory.FULL_ILLUSTRATION, 
       imageUrl: 'https://picsum.photos/seed/ffxiv-chibi/800/800'
     },
     { 
-      id: 5, 
+      id: '5', 
       title: "Shadowbringer", 
       category: ArtworkCategory.FULL_ILLUSTRATION, 
       imageUrl: 'https://picsum.photos/seed/ffxiv-dark-knight/800/1200'
     },
     { 
-      id: 6, 
+      id: '6', 
       title: "Noble's Portrait", 
       category: ArtworkCategory.PORTRAIT, 
       imageUrl: 'https://picsum.photos/seed/anime-noble/800/1000'
     },
     { 
-      id: 7, 
+      id: '7', 
       title: "Limsa Lominsa Market", 
       category: ArtworkCategory.FULL_ILLUSTRATION, 
       imageUrl: 'https://picsum.photos/seed/fantasy-market/1200/800'
     },
     { 
-      id: 8, 
+      id: '8', 
       title: "Cosmic Voyager", 
       category: ArtworkCategory.FULL_ILLUSTRATION, 
       imageUrl: "https://picsum.photos/seed/anime-space/800/1200"
     },
     { 
-      id: 9, 
+      id: '9', 
       title: "Cute Summoner", 
       category: ArtworkCategory.FULL_ILLUSTRATION, 
       imageUrl: "https://picsum.photos/seed/chibi-mage/800/800"
     },
     { 
-      id: 10, 
+      id: '10', 
       title: "Samurai's Focus", 
       category: ArtworkCategory.PORTRAIT, 
       imageUrl: "https://picsum.photos/seed/anime-samurai/800/1000"
     },
     { 
-      id: 11, 
+      id: '11', 
       title: "Crystal Tower", 
       category: ArtworkCategory.FULL_ILLUSTRATION, 
       imageUrl: "https://picsum.photos/seed/fantasy-tower/1200/800"
     },
     { 
-      id: 12, 
+      id: '12', 
       title: "Steampunk Rebel", 
       category: ArtworkCategory.FULL_ILLUSTRATION, 
       imageUrl: "https://picsum.photos/seed/anime-steampunk/800/1200"

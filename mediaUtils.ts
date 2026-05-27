@@ -9,12 +9,17 @@ export const getDirectMediaUrl = (url: string): string => {
 
   // Imgur: Convert viewer page to direct image link
   // Handles: imgur.com/abc -> i.imgur.com/abc.png
+  // Handles: imgur.com/abc.png -> i.imgur.com/abc.png   (do not double-append extension)
   // Does NOT handle albums (e.g. imgur.com/a/...) as those contain multiple images
   if (processedUrl.includes('imgur.com/') && !processedUrl.includes('i.imgur.com/') && !processedUrl.includes('/a/')) {
     const parts = processedUrl.split('/');
-    const id = parts[parts.length - 1];
-    if (id) {
-      return `https://i.imgur.com/${id}.png`;
+    let last = parts[parts.length - 1] ?? '';
+    // strip query/hash if present
+    last = last.split('?')[0]?.split('#')[0] ?? last;
+    // drop any accidental empty
+    if (last) {
+      const hasExt = /\.(png|jpe?g|gif|webp|mp4|webm)$/i.test(last);
+      return `https://i.imgur.com/${hasExt ? last : `${last}.png`}`;
     }
   }
 

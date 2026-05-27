@@ -1,0 +1,16 @@
+name = "loys-art"
+compatibility_date = "2024-11-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "loys_art"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "CDN"
+bucket_name = "loys-art"
+
+[vars]
+ADMIN_EMAILS = "pechonloise36@gmail.com,darlene.quinagon@gmail.com"
+CDN_BASE = "https://cdn.loys.art"

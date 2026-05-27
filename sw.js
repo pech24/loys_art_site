@@ -10,7 +10,11 @@ const PRE_CACHE_CDN = [
   'https://cdn.loys.art/common/steps/Step1.png',
   'https://cdn.loys.art/common/steps/Step2.png',
   'https://cdn.loys.art/common/steps/Step3.png',
-  'https://cdn.loys.art/common/steps/Step4.png'
+  'https://cdn.loys.art/common/steps/Step4.png',
+  'https://cdn.loys.art/common/Webm/Cover.webm',
+  'https://cdn.loys.art/common/Webm/HeadPortrait.webm',
+  'https://cdn.loys.art/common/Webm/Full.webm',
+  'https://cdn.loys.art/common/Webm/30days.webm'
 ];
 
 // Media extensions to cache
@@ -18,24 +22,10 @@ const MEDIA_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.mp
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
+    caches.open(CACHE_NAME).then((cache) => {
       console.log('SW: Pre-caching static assets');
-      await cache.addAll(STATIC_ASSETS);
-
-      await Promise.all(PRE_CACHE_CDN.map(async (url) => {
-        try {
-          const request = new Request(url, { mode: 'no-cors' });
-          const response = await fetch(request);
-          if (response.ok || response.type === 'opaque') {
-            await cache.put(request, response.clone());
-            console.log('SW: Cached external asset', url);
-          } else {
-            console.warn('SW: External asset fetch returned non-ok response', url, response.status);
-          }
-        } catch (error) {
-          console.warn('SW: External asset fetch failed', url, error);
-        }
-      }));
+      cache.addAll(STATIC_ASSETS);
+      return cache.addAll(PRE_CACHE_CDN);
     })
   );
   self.skipWaiting();
@@ -90,50 +80,27 @@ self.addEventListener('fetch', (event) => {
                   url.hostname.includes('youtube.com') ||
                   url.hostname.includes('ytimg.com');
 
-  const isCrossOriginMedia = isMedia && url.origin !== self.location.origin;
-  if (isCrossOriginMedia) {
-    // Let the browser load cross-origin media directly.
-    // This avoids CORS issues caused by fetch interception in the service worker.
-    return;
-  }
-
   if (isMedia) {
-    const isRangeRequest = event.request.headers.has('range');
-    if (isRangeRequest) {
-      event.respondWith(
-        fetch(event.request).catch(() => caches.match(event.request))
-      );
-      return;
-    }
-
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) return cachedResponse;
 
-        return caches.match(url.href).then((fallbackCached) => {
-          if (fallbackCached) return fallbackCached;
-
-          return fetch(event.request).then((networkResponse) => {
-            if (!networkResponse) {
-              return networkResponse;
-            }
-
-            // Do not cache partial content responses (206) from range-enabled media
-            if (networkResponse.status === 206) {
-              return networkResponse;
-            }
-
-            const validForCache = networkResponse.ok || networkResponse.type === 'opaque';
-            if (validForCache) {
-              const responseToCache = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
+        return fetch(event.request).then((networkResponse) => {
+          if (!networkResponse || networkResponse.status !== 200) {
+            if (networkResponse.type === 'opaque') {
+               const responseToCache = networkResponse.clone();
+               caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
             }
             return networkResponse;
-          }).catch(() => {
-            return cachedResponse || fallbackCached;
+          }
+
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
           });
+          return networkResponse;
+        }).catch(() => {
+          return cachedResponse;
         });
       })
     );

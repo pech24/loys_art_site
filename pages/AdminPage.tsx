@@ -1,14 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { auth, loginWithGoogle, logout, db, storage } from '../firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, setDoc } from 'firebase/firestore';
-import { ref, listAll, deleteObject } from 'firebase/storage';
-import { motion, AnimatePresence } from 'motion/react';
-import { LogIn, LogOut, Plus, Trash2, ShieldCheck, Image as ImageIcon, Loader2, Film, FileText, Edit, X, ExternalLink, Settings, AlertTriangle, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  getAuthUser,
+  loginWithGooglePopup,
+  logout,
+  fetchGalleryAdmin,
+  fetchVerifiedAdmin,
+  createGalleryItem,
+  updateGalleryItem,
+  deleteGalleryItem,
+  createVerifiedItem,
+  updateVerifiedItem,
+  deleteVerifiedItem,
+  type AuthUser,
+} from '../lib/api';
+import { motion } from 'motion/react';
+import { LogIn, LogOut, Plus, Trash2, ShieldCheck, Loader2, Film, Edit, X, ExternalLink } from 'lucide-react';
 import { ArtworkCategory } from '../types';
 import { getDirectMediaUrl, isVideoUrl, isYoutubeUrl, getYoutubeEmbedUrl, getYoutubeThumbnail } from '../mediaUtils';
-
-const ADMIN_EMAILS = ['pechonloise36@gmail.com', 'darlene.quinagon@gmail.com'];
 
 const MediaPreview: React.FC<{ url: string }> = ({ url }) => {
   return (
@@ -51,18 +59,17 @@ const MediaPreview: React.FC<{ url: string }> = ({ url }) => {
 };
 
 const AdminPage: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'gallery' | 'verified'>('gallery');
   
-  // Gallery Form State
   const [galleryForm, setGalleryForm] = useState({
     title: '',
     category: ArtworkCategory.PORTRAIT,
     imageUrl: ''
   });
 
-  // Verified Art Form State
   const [verifiedForm, setVerifiedForm] = useState({
     artworkId: '',
     title: '',
@@ -89,21 +96,20 @@ const AdminPage: React.FC = () => {
 
   const [items, setItems] = useState<any[]>([]);
   const [isActionLoading, setIsActionLoading] = useState(false);
-  const [isCleaning, setIsCleaning] = useState(false);
-  const [cleanupStatus, setCleanupStatus] = useState<string>('');
-  const [showCleanup, setShowCleanup] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const refreshAuth = async () => {
+    const authUser = await getAuthUser();
+    setUser(authUser);
+    setIsAuthLoading(false);
+  };
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setIsAuthLoading(false);
-    });
-    return () => unsubscribe();
+    refreshAuth();
   }, []);
 
   useEffect(() => {
-    if (user && user.email && ADMIN_EMAILS.includes(user.email)) {
+    if (user?.isAdmin) {
       fetchItems();
     }
   }, [user, activeTab]);
@@ -111,10 +117,13 @@ const AdminPage: React.FC = () => {
   const fetchItems = async () => {
     setIsActionLoading(true);
     try {
-      const colName = activeTab === 'gallery' ? 'gallery' : 'verified_artworks';
-      const q = query(collection(db, colName));
-      const snap = await getDocs(q);
-      setItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      if (activeTab === 'gallery') {
+        const gallery = await fetchGalleryAdmin();
+        setItems(gallery.map((g) => ({ id: g.id, ...g })));
+      } else {
+        const verified = await fetchVerifiedAdmin();
+        setItems(verified.map((v) => ({ id: v.artworkId, ...v })));
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -122,49 +131,13 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const cleanupStorage = async () => {
-    const isAdmin = user?.email === 'pechonloise36@gmail.com';
-    if (!isAdmin) {
-      alert("Only the primary administrator (pechonloise36@gmail.com) has permission to wipe storage assets based on security rules.");
-      return;
-    }
-
-    if (!window.confirm("WARNING: This will scan and delete ALL files in your Firebase Storage bucket root and common folders. This cannot be undone. Proceed only if you have replaced all storage URLs with external links.")) return;
-    
-    setIsCleaning(true);
-    setCleanupStatus('Scanning storage...');
+  const handleLogin = async () => {
+    setLoginError(null);
     try {
-      // List of common paths to check
-      const paths = ['', 'gallery', 'verified_artworks', 'artworks'];
-      let deletedCount = 0;
-
-      for (const path of paths) {
-        setCleanupStatus(`Scanning: /${path}...`);
-        const storageRef = ref(storage, path);
-        const list = await listAll(storageRef);
-        
-        for (const itemRef of list.items) {
-          // Skip known public resources if any (usually they stay in /public/ but just in case)
-          if (itemRef.name === 'Profile Pic.png' || itemRef.name === 'Signature.png' || itemRef.name === 'Cover.webm') continue;
-          
-          setCleanupStatus(`Deleting: ${itemRef.name}...`);
-          try {
-            await deleteObject(itemRef);
-            deletedCount++;
-          } catch (err) {
-            console.error(`Failed to delete ${itemRef.name}:`, err);
-          }
-        }
-      }
-      
-      alert(`Cleanup complete. Deleted ${deletedCount} files.`);
-      setCleanupStatus('');
-    } catch (e: any) {
-      console.error(e);
-      alert(`Error during cleanup: ${e.message}`);
-    } finally {
-      setIsCleaning(false);
-      setCleanupStatus('');
+      await loginWithGooglePopup();
+      await refreshAuth();
+    } catch (e) {
+      setLoginError(e instanceof Error ? e.message : 'Login failed');
     }
   };
 
@@ -177,29 +150,15 @@ const AdminPage: React.FC = () => {
     setIsActionLoading(true);
     try {
       if (editingId) {
-        await setDoc(doc(db, 'gallery', editingId), {
-          ...galleryForm,
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
+        await updateGalleryItem(editingId, galleryForm);
       } else {
-        await addDoc(collection(db, 'gallery'), {
-          ...galleryForm,
-          order: items.length,
-          createdAt: new Date().toISOString()
-        });
+        await createGalleryItem(galleryForm);
       }
-
-      setGalleryForm({
-        title: '',
-        category: ArtworkCategory.PORTRAIT,
-        imageUrl: ''
-      });
+      setGalleryForm({ title: '', category: ArtworkCategory.PORTRAIT, imageUrl: '' });
       setEditingId(null);
       fetchItems();
     } catch (e) { alert(e); }
-    finally { 
-      setIsActionLoading(false); 
-    }
+    finally { setIsActionLoading(false); }
   };
 
   const handleAddVerified = async (e: React.FormEvent) => {
@@ -210,16 +169,15 @@ const AdminPage: React.FC = () => {
     }
     setIsActionLoading(true);
     try {
-      const { artworkId, ...data } = verifiedForm;
-      
-      const docId = editingId || artworkId;
-      await setDoc(doc(db, 'verified_artworks', docId), {
-        artworkId: editingId ? items.find(i => i.id === editingId).artworkId : artworkId,
-        ...data,
-        originalOwner: data.originalOwner || data.commissioner,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
-
+      const payload = {
+        ...verifiedForm,
+        originalOwner: verifiedForm.originalOwner || verifiedForm.commissioner,
+      };
+      if (editingId) {
+        await updateVerifiedItem(editingId, payload as any);
+      } else {
+        await createVerifiedItem(payload as any);
+      }
       setVerifiedForm({
         ...verifiedForm,
         artworkId: '',
@@ -235,9 +193,7 @@ const AdminPage: React.FC = () => {
       setEditingId(null);
       fetchItems();
     } catch (e) { alert(e); }
-    finally { 
-      setIsActionLoading(false); 
-    }
+    finally { setIsActionLoading(false); }
   };
 
   const handleEdit = (item: any) => {
@@ -308,8 +264,11 @@ const AdminPage: React.FC = () => {
     if (!window.confirm('Are you sure?')) return;
     setIsActionLoading(true);
     try {
-      const colName = activeTab === 'gallery' ? 'gallery' : 'verified_artworks';
-      await deleteDoc(doc(db, colName, id));
+      if (activeTab === 'gallery') {
+        await deleteGalleryItem(id);
+      } else {
+        await deleteVerifiedItem(id);
+      }
       fetchItems();
     } catch (e) { alert(e); }
     finally { setIsActionLoading(false); }
@@ -317,13 +276,14 @@ const AdminPage: React.FC = () => {
 
   if (isAuthLoading) return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin text-gold" size={48} /></div>;
 
-  if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
+  if (!user?.isAdmin) {
     return (
       <div className="max-w-md mx-auto mt-20 p-8 glass-panel text-center space-y-6">
         <ShieldCheck className="mx-auto text-gold" size={64} />
         <h1 className="text-3xl font-serif text-deep-red">Admin Access</h1>
         <p className="text-ink/60">This area is restricted to the archive administrator.</p>
-        <button onClick={loginWithGoogle} className="w-full btn-celestial flex items-center justify-center gap-2">
+        {loginError && <p className="text-sm text-deep-red">{loginError}</p>}
+        <button onClick={handleLogin} className="w-full btn-celestial flex items-center justify-center gap-2">
           <LogIn size={18} /> Login with Google
         </button>
       </div>
@@ -334,7 +294,7 @@ const AdminPage: React.FC = () => {
     <div className="max-w-6xl mx-auto px-4 py-12 space-y-12">
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-serif text-deep-red">Archive Management</h1>
-        <button onClick={logout} className="text-ink/40 hover:text-deep-red flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
+        <button onClick={async () => { await logout(); setUser(null); }} className="text-ink/40 hover:text-deep-red flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
           <LogOut size={16} /> Logout
         </button>
       </div>
@@ -355,7 +315,6 @@ const AdminPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Form Column */}
         <div className="lg:col-span-1 space-y-8">
           <div className="glass-panel p-6 space-y-6">
             <div className="flex justify-between items-center">
@@ -379,21 +338,11 @@ const AdminPage: React.FC = () => {
                     {Object.values(ArtworkCategory).map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-
                 <div className="space-y-4">
                   <label className="text-xs font-bold uppercase tracking-widest text-ink/40">Artwork Asset</label>
-                  <input 
-                    type="url" 
-                    placeholder="Image or Video URL" 
-                    required 
-                    className="w-full p-3 border rounded-lg" 
-                    value={galleryForm.imageUrl} 
-                    onChange={e => setGalleryForm({...galleryForm, imageUrl: e.target.value})} 
-                  />
+                  <input type="url" placeholder="Image or Video URL" required={!editingId} className="w-full p-3 border rounded-lg" value={galleryForm.imageUrl} onChange={e => setGalleryForm({...galleryForm, imageUrl: e.target.value})} />
                   <MediaPreview url={galleryForm.imageUrl} />
-                  <p className="text-[10px] text-ink/40">Provide a direct link to the image or MP4/WebM video file. Support for Imgur, Google Drive, and Dropbox included.</p>
                 </div>
-
                 <button type="submit" disabled={isActionLoading} className="w-full btn-celestial flex items-center justify-center gap-2">
                   {isActionLoading ? <Loader2 className="animate-spin" size={18} /> : (editingId ? <Edit size={18} /> : <Plus size={18} />)}
                   {isActionLoading ? 'Processing...' : (editingId ? 'Update Entry' : 'Add to Gallery')}
@@ -403,100 +352,29 @@ const AdminPage: React.FC = () => {
               <form onSubmit={handleAddVerified} className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
                 <div className="space-y-4">
                   <label className="text-xs font-bold uppercase tracking-widest text-gold">1. Core Identity</label>
-                  <input 
-                    type="text" 
-                    placeholder="Artwork ID (e.g. LYS-2026-001)" 
-                    required 
-                    disabled={!!editingId}
-                    className={`w-full p-3 border rounded-lg ${editingId ? 'bg-gray-50 text-ink/40' : ''}`} 
-                    value={verifiedForm.artworkId} 
-                    onChange={e => setVerifiedForm({...verifiedForm, artworkId: e.target.value})} 
-                  />
+                  <input type="text" placeholder="Artwork ID (e.g. LYS-2026-001)" required disabled={!!editingId} className={`w-full p-3 border rounded-lg ${editingId ? 'bg-gray-50 text-ink/40' : ''}`} value={verifiedForm.artworkId} onChange={e => setVerifiedForm({...verifiedForm, artworkId: e.target.value})} />
                   <input type="text" placeholder="Artwork Title" required className="w-full p-3 border rounded-lg" value={verifiedForm.title} onChange={e => setVerifiedForm({...verifiedForm, title: e.target.value})} />
                   <input type="text" placeholder="Character Name" className="w-full p-3 border rounded-lg" value={verifiedForm.characterName} onChange={e => setVerifiedForm({...verifiedForm, characterName: e.target.value})} />
                 </div>
-
                 <div className="space-y-4">
-                  <label className="text-xs font-bold uppercase tracking-widest text-gold">2. Visual Assets (Embed URLs)</label>
-                  
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-widest text-ink/40 font-bold">Main Artwork Image URL</p>
-                    <input 
-                      type="url" 
-                      placeholder="https://..." 
-                      required 
-                      className="w-full p-3 border rounded-lg" 
-                      value={verifiedForm.imageUrl} 
-                      onChange={e => setVerifiedForm({...verifiedForm, imageUrl: e.target.value})} 
-                    />
-                    <MediaPreview url={verifiedForm.imageUrl} />
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-widest text-ink/40 font-bold">Timelapse Video URL</p>
-                    <input 
-                      type="url" 
-                      placeholder="https://..." 
-                      className="w-full p-3 border rounded-lg" 
-                      value={verifiedForm.timelapseUrl} 
-                      onChange={e => setVerifiedForm({...verifiedForm, timelapseUrl: e.target.value})} 
-                    />
-                    <MediaPreview url={verifiedForm.timelapseUrl} />
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-widest text-ink/40 font-bold">Reference Image URL</p>
-                    <input 
-                      type="url" 
-                      placeholder="https://..." 
-                      className="w-full p-3 border rounded-lg" 
-                      value={verifiedForm.referenceUrl} 
-                      onChange={e => setVerifiedForm({...verifiedForm, referenceUrl: e.target.value})} 
-                    />
-                    <MediaPreview url={verifiedForm.referenceUrl} />
-                  </div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-gold">2. Visual Assets</label>
+                  <input type="url" placeholder="Main Artwork Image URL" required={!editingId} className="w-full p-3 border rounded-lg" value={verifiedForm.imageUrl} onChange={e => setVerifiedForm({...verifiedForm, imageUrl: e.target.value})} />
+                  <MediaPreview url={verifiedForm.imageUrl} />
+                  <input type="url" placeholder="Timelapse URL" className="w-full p-3 border rounded-lg" value={verifiedForm.timelapseUrl} onChange={e => setVerifiedForm({...verifiedForm, timelapseUrl: e.target.value})} />
+                  <MediaPreview url={verifiedForm.timelapseUrl} />
+                  <input type="url" placeholder="Reference URL" className="w-full p-3 border rounded-lg" value={verifiedForm.referenceUrl} onChange={e => setVerifiedForm({...verifiedForm, referenceUrl: e.target.value})} />
+                  <MediaPreview url={verifiedForm.referenceUrl} />
                 </div>
-
                 <div className="space-y-4">
                   <label className="text-xs font-bold uppercase tracking-widest text-gold">3. Artwork Specs</label>
-                  <input type="text" placeholder="Commission Type (e.g. Full Body)" className="w-full p-3 border rounded-lg" value={verifiedForm.commissionType} onChange={e => setVerifiedForm({...verifiedForm, commissionType: e.target.value})} />
+                  <input type="text" placeholder="Commission Type" className="w-full p-3 border rounded-lg" value={verifiedForm.commissionType} onChange={e => setVerifiedForm({...verifiedForm, commissionType: e.target.value})} />
                   <input type="text" placeholder="Medium" className="w-full p-3 border rounded-lg" value={verifiedForm.medium} onChange={e => setVerifiedForm({...verifiedForm, medium: e.target.value})} />
-                  <input type="text" placeholder="Resolution" className="w-full p-3 border rounded-lg" value={verifiedForm.resolution} onChange={e => setVerifiedForm({...verifiedForm, resolution: e.target.value})} />
-                  <input type="text" placeholder="Aspect Ratio" className="w-full p-3 border rounded-lg" value={verifiedForm.aspectRatio} onChange={e => setVerifiedForm({...verifiedForm, aspectRatio: e.target.value})} />
                   <input type="date" className="w-full p-3 border rounded-lg" value={verifiedForm.creationDate} onChange={e => setVerifiedForm({...verifiedForm, creationDate: e.target.value})} />
                 </div>
-
                 <div className="space-y-4">
-                  <label className="text-xs font-bold uppercase tracking-widest text-gold">4. Rarity & Rights</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <select className="p-3 border rounded-lg" value={verifiedForm.uniqueCommission} onChange={e => setVerifiedForm({...verifiedForm, uniqueCommission: e.target.value})}>
-                      <option value="Yes">Unique: Yes</option>
-                      <option value="No">Unique: No</option>
-                    </select>
-                    <select className="p-3 border rounded-lg" value={verifiedForm.oneOfOne} onChange={e => setVerifiedForm({...verifiedForm, oneOfOne: e.target.value})}>
-                      <option value="Yes">1-of-1: Yes</option>
-                      <option value="No">1-of-1: No</option>
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <select className="p-3 border rounded-lg" value={verifiedForm.commercialRights} onChange={e => setVerifiedForm({...verifiedForm, commercialRights: e.target.value})}>
-                      <option value="No">Commercial: No</option>
-                      <option value="Yes">Commercial: Yes</option>
-                    </select>
-                    <input type="text" placeholder="Reproduction Limit" className="w-full p-3 border rounded-lg" value={verifiedForm.reproductionLimit} onChange={e => setVerifiedForm({...verifiedForm, reproductionLimit: e.target.value})} />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <label className="text-xs font-bold uppercase tracking-widest text-gold">5. Ownership</label>
+                  <label className="text-xs font-bold uppercase tracking-widest text-gold">4. Ownership</label>
                   <input type="text" placeholder="Commissioned By" required className="w-full p-3 border rounded-lg" value={verifiedForm.commissioner} onChange={e => setVerifiedForm({...verifiedForm, commissioner: e.target.value})} />
-                  <input type="text" placeholder="Original Owner (leave blank if same)" className="w-full p-3 border rounded-lg" value={verifiedForm.originalOwner} onChange={e => setVerifiedForm({...verifiedForm, originalOwner: e.target.value})} />
-                  <select className="w-full p-3 border rounded-lg" value={verifiedForm.transferable} onChange={e => setVerifiedForm({...verifiedForm, transferable: e.target.value})}>
-                    <option value="No">Transferable: No</option>
-                    <option value="Yes">Transferable: Yes</option>
-                  </select>
                 </div>
-
                 <button type="submit" disabled={isActionLoading} className="w-full btn-celestial sticky bottom-0 flex items-center justify-center gap-2">
                   {isActionLoading ? <Loader2 className="animate-spin" size={18} /> : (editingId ? <Edit size={18} /> : <ShieldCheck size={18} />)}
                   {isActionLoading ? 'Securing...' : (editingId ? 'Update Certificate' : 'Issue Certificate')}
@@ -504,58 +382,13 @@ const AdminPage: React.FC = () => {
               </form>
             )}
           </div>
-
-          {/* Maintenance Section */}
-          <div className="glass-panel p-6 space-y-4 bg-void/5 border-dashed border-gold/20">
-            <button 
-              onClick={() => setShowCleanup(!showCleanup)}
-              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ink/40 hover:text-gold transition-colors w-full justify-between"
-            >
-              <span className="flex items-center gap-2"><Settings size={14} /> Maintenance Tools</span>
-              <ChevronDown size={14} className={`transition-transform ${showCleanup ? 'rotate-180' : ''}`} />
-            </button>
-            
-            <AnimatePresence>
-              {showCleanup && (
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="space-y-4 overflow-hidden pt-2"
-                >
-                  <div className="p-4 bg-deep-red/5 border border-deep-red/20 rounded-lg space-y-2">
-                    <p className="text-xs font-bold text-deep-red flex items-center gap-2">
-                      <AlertTriangle size={14} /> Cleanup Media Storage
-                    </p>
-                    <p className="text-[10px] text-ink/60 leading-relaxed">
-                      This will permanently delete all uploaded images and videos from Firebase Storage. 
-                      Since you are now using direct URLs, these old files are no longer needed.
-                    </p>
-                    <button 
-                      onClick={cleanupStorage}
-                      disabled={isCleaning}
-                      className="w-full py-2 bg-deep-red text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-ink transition-colors disabled:opacity-50"
-                    >
-                      {isCleaning ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <Loader2 className="animate-spin" size={12} /> {cleanupStatus}
-                        </span>
-                      ) : 'Wipe Storage Assets'}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
 
-        {/* List Column */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-serif text-ink">Current Entries ({items.length})</h2>
             {isActionLoading && <Loader2 className="animate-spin text-gold" size={20} />}
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {items.map(item => (
               <div key={item.id} className="glass-panel p-4 flex gap-4 items-center group">
@@ -575,20 +408,8 @@ const AdminPage: React.FC = () => {
                   <p className="text-xs text-ink/40 truncate">{activeTab === 'gallery' ? item.category : item.artworkId}</p>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={() => handleEdit(item)}
-                    className="p-2 text-ink/20 hover:text-gold transition-colors"
-                    title="Edit"
-                  >
-                    <Edit size={18} />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(item.id)}
-                    className="p-2 text-ink/20 hover:text-deep-red transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <button onClick={() => handleEdit(item)} className="p-2 text-ink/20 hover:text-gold transition-colors" title="Edit"><Edit size={18} /></button>
+                  <button onClick={() => handleDelete(item.id)} className="p-2 text-ink/20 hover:text-deep-red transition-colors" title="Delete"><Trash2 size={18} /></button>
                 </div>
               </div>
             ))}

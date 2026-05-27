@@ -13,10 +13,11 @@ export enum ArtworkCategory {
 }
 
 export interface Artwork {
-  id: number;
+  id: string;
   title: string;
-  category: ArtworkCategory;
+  category: ArtworkCategory | string;
   imageUrl: string;
+  order?: number;
   lore?: string;
   specs?: {
     timeTaken?: string;
