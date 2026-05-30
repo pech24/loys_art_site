@@ -43,11 +43,7 @@ async function route(request: Request, env: Env, url: URL, segments: string[]): 
   if (segments[0] === 'auth') {
     if (segments[1] === 'google' && method === 'GET') {
       const popup = url.searchParams.get('popup') === '1';
-      const mode = url.searchParams.get('mode');
       const authUrl = googleAuthUrl(env, url.origin, popup);
-      if (mode === 'url') {
-        return json({ authUrl }, 200, { 'Content-Type': 'application/json' });
-      }
       if (popup) {
         return new Response(googlePopupRedirectHtml(authUrl), {
           headers: { 'Content-Type': 'text/html; charset=utf-8' },
@@ -343,7 +339,7 @@ async function handleAuthCallback(request: Request, env: Env, url: URL): Promise
 function authPopupHtml(status: 'success' | 'error', message?: string): string {
   const payload = status === 'success' ? { type: 'loys-auth-success' } : { type: 'loys-auth-error', message };
   return `<!DOCTYPE html><html><body><script>
-    if (window.opener) window.opener.postMessage(${JSON.stringify(payload)}, window.location.origin);
+    if (window.opener) window.opener.postMessage(${JSON.stringify(payload)}, "*");
     window.close();
   </script><p>${message ?? 'Signed in. You can close this window.'}</p></body></html>`;
 }
