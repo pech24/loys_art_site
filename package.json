@@ -14,8 +14,12 @@
     "seed:sql": "node scripts/generate-seed-sql.mjs"
   },
   "dependencies": {
+    "@cloudflare/vite-plugin": "^1.39.0",
+    "@esbuild/win32-x64": "^0.28.0",
     "@formspree/react": "^3.0.0",
+    "@rollup/rollup-win32-x64-msvc": "^4.60.4",
     "@tailwindcss/vite": "^4.2.2",
+    "esbuild": "^0.28.0",
     "lucide-react": "^0.477.0",
     "motion": "^12.38.0",
     "react": "^19.2.0",
