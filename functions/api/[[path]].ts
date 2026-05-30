@@ -42,7 +42,13 @@ async function route(request: Request, env: Env, url: URL, segments: string[]): 
   if (segments[0] === 'auth') {
     if (segments[1] === 'google' && method === 'GET') {
       const popup = url.searchParams.get('popup') === '1';
-      return Response.redirect(googleAuthUrl(env, url.origin, popup), 302);
+      const authUrl = googleAuthUrl(env, url.origin, popup);
+      if (popup) {
+        return new Response(googlePopupRedirectHtml(authUrl), {
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        });
+      }
+      return Response.redirect(authUrl, 302);
     }
     if (segments[1] === 'callback' && method === 'GET') {
       return handleAuthCallback(request, env, url);
@@ -332,13 +338,21 @@ async function handleAuthCallback(request: Request, env: Env, url: URL): Promise
 function authPopupHtml(status: 'success' | 'error', message?: string): string {
   const payload = status === 'success' ? { type: 'loys-auth-success' } : { type: 'loys-auth-error', message };
   return `<!DOCTYPE html><html><body><script>
-    if (window.opener) window.opener.postMessage(${JSON.stringify(payload)}, window.location.origin);
+    if (window.opener) window.opener.postMessage(${JSON.stringify(payload)}, "*");
     window.close();
   </script><p>${message ?? 'Signed in. You can close this window.'}</p></body></html>`;
 }
 
 function authRedirectHtml(path: string): string {
   return `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${path}"></head><body><a href="${path}">Continue</a></body></html>`;
+}
+
+function googlePopupRedirectHtml(url: string): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Signing in with Google...</title></head><body>
+    <p style="font-family: sans-serif; color:#444; text-align:center; margin-top:3rem;">Redirecting to Google sign-in…</p>
+    <script>window.location.href = ${JSON.stringify(url)};</script>
+    <p style="font-family: sans-serif; color:#888; text-align:center; margin-top:1rem;">If you are not redirected, <a href=${JSON.stringify(url)}>click here</a>.</p>
+  </body></html>`;
 }
 
 async function listGallery(env: Env, url: URL): Promise<Response> {

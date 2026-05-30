@@ -46,11 +46,13 @@ export async function logout(): Promise<void> {
 
 export function loginWithGooglePopup(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const popup = window.open('/api/auth/google?popup=1', 'loys-google-auth', 'width=500,height=600');
+    const popupName = `loys-google-auth-${Date.now()}`;
+    const popup = window.open('/api/auth/google?popup=1', popupName, 'width=500,height=600');
     if (!popup) {
       reject(new Error('Popup blocked. Allow popups for this site.'));
       return;
     }
+    popup.focus();
 
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
