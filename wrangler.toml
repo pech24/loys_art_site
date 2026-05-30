@@ -14,5 +14,3 @@ bucket_name = "loys-art"
 [vars]
 ADMIN_EMAILS = "pechonloise36@gmail.com,darlene.quinagon@gmail.com"
 CDN_BASE = "https://cdn.loys.art"
-TURNSTILE_SECRET_KEY="0x4AAAAAADXNaXQ7yqFdD3QpbgzPeEdREXc"
-VITE_TURNSTILE_SITE_KEY="0x4AAAAAADXNaSHdC6KrVMdk"
