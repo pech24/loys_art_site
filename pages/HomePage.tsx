@@ -22,7 +22,6 @@ const HomePage: React.FC = () => {
             loop 
             playsInline 
             className="w-full h-full object-cover opacity-50"
-            crossOrigin="anonymous"
           >
             <source src="https://cdn.loys.art/common/Webm/Cover.webm" type="video/webm" />
             Your browser does not support the video tag.
@@ -98,7 +97,6 @@ const HomePage: React.FC = () => {
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                             referrerPolicy="no-referrer"
                             loading="lazy"
-                            crossOrigin="anonymous"
                           />
                         ) : isVideoUrl(tier.imageUrl) ? (
                           <video 
@@ -108,7 +106,6 @@ const HomePage: React.FC = () => {
                             playsInline 
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             preload="metadata"
-                            crossOrigin="anonymous"
                           >
                             <source src={getDirectMediaUrl(tier.imageUrl)} type={tier.imageUrl.endsWith('.webm') ? 'video/webm' : 'video/mp4'} />
                           </video>
@@ -119,7 +116,6 @@ const HomePage: React.FC = () => {
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                             referrerPolicy="no-referrer"
                             loading="lazy"
-                            crossOrigin="anonymous"
                           />
                         )}
                       </div>
@@ -193,7 +189,6 @@ const HomePage: React.FC = () => {
                           className="w-full" 
                           referrerPolicy="no-referrer"
                           loading="lazy"
-                          crossOrigin="anonymous"
                         />
                       </div>
                     </div>
