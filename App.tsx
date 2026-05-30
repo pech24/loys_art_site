@@ -14,11 +14,17 @@ const CertificatePage = lazy(() => import('./pages/CertificatePage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 const PageLoader = () => (
+
+
+
   <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
     <Loader2 className="animate-spin text-gold" size={48} />
     <p className="text-gold font-serif text-xl tracking-widest uppercase animate-pulse">Entering the Archives...</p>
   </div>
 );
+
+console.log('Loading page...');
+
 
 const ScrollToHash: React.FC = () => {
   const { hash, pathname } = useLocation();
