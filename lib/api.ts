@@ -85,22 +85,8 @@ export function loginWithGooglePopup(): Promise<void> {
 
     window.addEventListener('message', onMessage);
 
-    fetch('/api/auth/google?popup=1&mode=url', { method: 'GET', credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error((data as { error?: string }).error ?? `Auth URL request failed (${res.status})`);
-        }
-        const data = await res.json() as { authUrl?: string };
-        if (!data.authUrl) {
-          throw new Error('Could not get Google auth URL');
-        }
-        popup.location.href = data.authUrl;
-      })
-      .catch((error) => {
-        cleanup();
-        reject(error instanceof Error ? error : new Error(String(error)));
-      });
+    // Open the auth endpoint directly; the popup route will redirect to Google.
+    popup.location.href = '/api/auth/google?popup=1';
   });
 }
 

@@ -45,6 +45,15 @@ async function route(request: Request, env: Env, url: URL, segments: string[]): 
       const popup = url.searchParams.get('popup') === '1';
       const mode = url.searchParams.get('mode');
       const authUrl = googleAuthUrl(env, url.origin, popup);
+      // If Google OAuth isn't configured, surface a helpful error in the popup
+      if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+        const message = 'Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your environment.';
+        if (mode === 'url') return json({ error: message }, 400, { 'Content-Type': 'application/json' });
+        if (popup) {
+          return new Response(`<!DOCTYPE html><html><body><h2 style="font-family:sans-serif;color:#c33">OAuth misconfigured</h2><p style="font-family:sans-serif;color:#444">${message}</p><p style="font-family:sans-serif;color:#444">Expected callback: <code>${googleAuthUrl(env, url.origin, popup)}</code></p></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+        }
+        return json({ error: message }, 400, { 'Content-Type': 'application/json' });
+      }
       if (mode === 'url') {
         return json({ authUrl }, 200, { 'Content-Type': 'application/json' });
       }
