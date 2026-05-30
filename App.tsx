@@ -40,6 +40,7 @@ const ScrollToHash: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  // build
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
       <ScrollToHash />
