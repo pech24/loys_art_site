@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "loys-art",
+  "name": "loysart",
   "compatibility_date": "2026-05-04",
   "observability": {
     "enabled": true
