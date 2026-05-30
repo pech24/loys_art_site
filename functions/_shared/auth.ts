@@ -55,8 +55,12 @@ export async function requireAdmin(request: Request, env: Env): Promise<SessionP
   return session;
 }
 
+export function getGoogleRedirectUri(env: Env, origin: string): string {
+  return env.GOOGLE_REDIRECT_URI?.replace(/\/$/, '') ?? `${origin}/api/auth/callback`;
+}
+
 export function googleAuthUrl(env: Env, origin: string, popup: boolean): string {
-  const redirectUri = `${origin}/api/auth/callback`;
+  const redirectUri = getGoogleRedirectUri(env, origin);
   const state = btoa(JSON.stringify({ popup, redirectUri }));
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
@@ -68,6 +72,10 @@ export function googleAuthUrl(env: Env, origin: string, popup: boolean): string 
     state,
   });
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+export function getGoogleRedirectUri(env: Env, origin: string): string {
+  return env.GOOGLE_REDIRECT_URI?.replace(/\/$/, '') ?? `${origin}/api/auth/callback`;
 }
 
 export async function exchangeGoogleCode(code: string, redirectUri: string, env: Env): Promise<{ email: string; name?: string; picture?: string }> {

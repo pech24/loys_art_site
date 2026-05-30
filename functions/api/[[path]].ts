@@ -3,6 +3,7 @@ import {
   clearSessionCookie,
   createSessionCookie,
   exchangeGoogleCode,
+  getGoogleRedirectUri,
   getSession,
   googleAuthUrl,
   isAdminEmail,
@@ -303,7 +304,7 @@ async function handleAuthCallback(request: Request, env: Env, url: URL): Promise
   if (!code || !stateRaw) return error('Missing OAuth parameters', 400);
 
   let popup = false;
-  let redirectUri = `${url.origin}/api/auth/callback`;
+  let redirectUri = getGoogleRedirectUri(env, url.origin);
   try {
     const state = JSON.parse(atob(stateRaw)) as { popup?: boolean; redirectUri?: string };
     popup = !!state.popup;
