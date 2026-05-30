@@ -46,6 +46,9 @@ const Footer: React.FC = () => {
             <p className="text-white/40 text-sm tracking-widest uppercase">
               &copy; {new Date().getFullYear()} Loys. All Rights Reserved.
             </p>
+            <p className="text-white/30 text-[10px] uppercase tracking-[0.4em]">
+              v2
+            </p>
             <p className="text-white/20 text-xs italic">
               "Through the stars, we find our vision."
             </p>
