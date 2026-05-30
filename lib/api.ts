@@ -46,11 +46,13 @@ export async function logout(): Promise<void> {
 
 export function loginWithGooglePopup(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const popup = window.open('/api/auth/google?popup=1', 'loys-google-auth', 'width=500,height=600');
+    const popupName = `loys-google-auth-${Date.now()}`;
+    const popup = window.open('about:blank', popupName, 'width=500,height=600');
     if (!popup) {
       reject(new Error('Popup blocked. Allow popups for this site.'));
       return;
     }
+    popup.focus();
 
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
@@ -82,6 +84,23 @@ export function loginWithGooglePopup(): Promise<void> {
     };
 
     window.addEventListener('message', onMessage);
+
+    fetch('/api/auth/google?popup=1&mode=url', { method: 'GET', credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error((data as { error?: string }).error ?? `Auth URL request failed (${res.status})`);
+        }
+        const data = await res.json() as { authUrl?: string };
+        if (!data.authUrl) {
+          throw new Error('Could not get Google auth URL');
+        }
+        popup.location.href = data.authUrl;
+      })
+      .catch((error) => {
+        cleanup();
+        reject(error instanceof Error ? error : new Error(String(error)));
+      });
   });
 }
 
