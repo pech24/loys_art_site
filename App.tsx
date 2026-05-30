@@ -20,7 +20,7 @@ const PageLoader = () => (
   </div>
 );
 
-console.log('Loading page v2.0.1');
+console.log('Loading page v2');
 
 
 const ScrollToHash: React.FC = () => {
