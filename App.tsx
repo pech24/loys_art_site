@@ -41,6 +41,7 @@ const ScrollToHash: React.FC = () => {
 
 const App: React.FC = () => {
   return (
+    // for push
     <div className="min-h-screen flex flex-col overflow-x-hidden">
       <ScrollToHash />
       <Header />
