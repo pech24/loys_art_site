@@ -1,6 +1,6 @@
 import type { VerifiedArtwork } from '../types';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_BASE?.replace(/\/$/, '') ?? '/api';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -99,7 +99,7 @@ export function loginWithGooglePopup(): Promise<void> {
     window.addEventListener('message', onMessage);
 
     // Open the auth endpoint directly; the popup route will redirect to Google.
-    popup.location.href = '/api/auth/google?popup=1';
+    popup.location.href = `${API_BASE}/auth/google?popup=1`;
   });
 }
 

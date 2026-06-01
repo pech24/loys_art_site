@@ -1,3 +1,11 @@
+interface ImportMetaEnv {
+  readonly VITE_API_BASE?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 interface Env {
   DB: D1Database;
   CDN: R2Bucket;

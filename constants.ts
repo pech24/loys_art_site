@@ -64,76 +64,23 @@ export const commissionTerms = [
 ];
 
 export const galleryArtworks: Artwork[] = [
-    { 
-      id: '1', 
-      title: "Starlight Warrior", 
-      category: ArtworkCategory.FULL_ILLUSTRATION, 
-      imageUrl: 'https://picsum.photos/seed/ffxiv-warrior/800/1200'
-    },
-    { 
-      id: '2', 
-      title: "Ethereal Conjurer", 
-      category: ArtworkCategory.PORTRAIT, 
-      imageUrl: 'https://picsum.photos/seed/ffxiv-mage/800/1000'
-    },
-    { 
-      id: '3', 
-      title: "Gridanian Vista", 
-      category: ArtworkCategory.FULL_ILLUSTRATION, 
-      imageUrl: 'https://picsum.photos/seed/ffxiv-scene/1200/800'
-    },
-    { 
-      id: '4', 
-      title: "Chibi Dragoon", 
-      category: ArtworkCategory.FULL_ILLUSTRATION, 
-      imageUrl: 'https://picsum.photos/seed/ffxiv-chibi/800/800'
-    },
-    { 
-      id: '5', 
-      title: "Shadowbringer", 
-      category: ArtworkCategory.FULL_ILLUSTRATION, 
-      imageUrl: 'https://picsum.photos/seed/ffxiv-dark-knight/800/1200'
-    },
-    { 
-      id: '6', 
-      title: "Noble's Portrait", 
-      category: ArtworkCategory.PORTRAIT, 
-      imageUrl: 'https://picsum.photos/seed/anime-noble/800/1000'
-    },
-    { 
-      id: '7', 
-      title: "Limsa Lominsa Market", 
-      category: ArtworkCategory.FULL_ILLUSTRATION, 
-      imageUrl: 'https://picsum.photos/seed/fantasy-market/1200/800'
-    },
-    { 
-      id: '8', 
-      title: "Cosmic Voyager", 
-      category: ArtworkCategory.FULL_ILLUSTRATION, 
-      imageUrl: "https://picsum.photos/seed/anime-space/800/1200"
-    },
-    { 
-      id: '9', 
-      title: "Cute Summoner", 
-      category: ArtworkCategory.FULL_ILLUSTRATION, 
-      imageUrl: "https://picsum.photos/seed/chibi-mage/800/800"
-    },
-    { 
-      id: '10', 
-      title: "Samurai's Focus", 
-      category: ArtworkCategory.PORTRAIT, 
-      imageUrl: "https://picsum.photos/seed/anime-samurai/800/1000"
-    },
-    { 
-      id: '11', 
-      title: "Crystal Tower", 
-      category: ArtworkCategory.FULL_ILLUSTRATION, 
-      imageUrl: "https://picsum.photos/seed/fantasy-tower/1200/800"
-    },
-    { 
-      id: '12', 
-      title: "Steampunk Rebel", 
-      category: ArtworkCategory.FULL_ILLUSTRATION, 
-      imageUrl: "https://picsum.photos/seed/anime-steampunk/800/1200"
-    },
+    { id: 'SKzz9W4H7usMnoPLGuBR', title: 'Tea at The Goblet', category: ArtworkCategory.FULL_ILLUSTRATION, order: 1, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Aaron%20Commission.png?updatedAt=1776906077951' },
+    { id: 'suTB1B1m4cVAeHlu7of9', title: 'Futures Rewritten', category: ArtworkCategory.FULL_ILLUSTRATION, order: 2, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Bridget%20Commission%202.png?updatedAt=1776906076651' },
+    { id: 'phwSOs5r52dKe5c8uqb4', title: 'Claws of Camaraderie', category: ArtworkCategory.FULL_ILLUSTRATION, order: 3, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Absol%20Finished.png?updatedAt=1776906074798' },
+    { id: 'R4FpwkcIjuNP56KUSwW1', title: 'Full Metal Mechanist', category: ArtworkCategory.FULL_ILLUSTRATION, order: 4, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Shane%20Commission.png?updatedAt=1776906076782' },
+    { id: 'WUKRejVhRFauum1v6440', title: 'Mage Exam', category: ArtworkCategory.FULL_ILLUSTRATION, order: 5, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Aschente%202.png?updatedAt=1776906074640' },
+    { id: 'B60sBf0SdwmFe3qf1Q0X', title: "Y'ahre", category: ArtworkCategory.PORTRAIT, order: 6, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Y_ahre%202.png?updatedAt=1776906070079' },
+    { id: 'q9w1KRRejLTa3gvDhRZK', title: 'Emiko', category: ArtworkCategory.PORTRAIT, order: 7, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Emiko%202.png?updatedAt=1776906072315' },
+    { id: 'JaYIUJRkDn36bl9TikQe', title: 'Loys Pichu', category: ArtworkCategory.PORTRAIT, order: 9, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Deej%20Finished%202.png?updatedAt=1776906069759' },
+    { id: 'qVC3jnFZAigx30rextNe', title: 'Ciel', category: ArtworkCategory.PORTRAIT, order: 10, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Deej%20Finished%203.png?updatedAt=1776906070099' },
+    { id: 'GpaqcuaHlv4udOya8B6d', title: 'Frost', category: ArtworkCategory.PORTRAIT, order: 11, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Frost%20Commission%20Finished.png?updatedAt=1776906070367' },
+    { id: 'rfK538B2v2ZEjA6Vml0J', title: 'Passing By', category: ArtworkCategory.PORTRAIT, order: 12, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Roy%20Commission%202%20finished.png?updatedAt=1776906070066' },
+    { id: 'PBAKZRLWCEjP4RpLNoe4', title: 'Bunkrap', category: ArtworkCategory.PORTRAIT, order: 13, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Bunkrap%20Finished%202.png?updatedAt=1776906069803' },
+    { id: 'YNm9EoYHCSEFQyiMl3pA', title: 'Tavern Glow', category: ArtworkCategory.PORTRAIT, order: 14, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Ryan%20Commission.png?updatedAt=1776906074677' },
+    { id: '9nDEeyj4J27XrwL5uFfK', title: 'Melancholy', category: ArtworkCategory.PORTRAIT, order: 16, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Deej%20Finished.png?updatedAt=1776906070346' },
+    { id: 'Y7VVt1qSuLUWN1jNFSLO', title: 'Fishers Intuition', category: ArtworkCategory.FULL_ILLUSTRATION, order: 17, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/1776099846696_Deej%20Fishing%20Commission.png?updatedAt=1776906076391' },
+    { id: 'Y6506cziBYZdPQkczZ3E', title: 'Eternal Bonding', category: ArtworkCategory.FULL_ILLUSTRATION, order: 18, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Wedding%201%20Finished.png?updatedAt=1776906076476' },
+    { id: 'UmtHL10ZEJ1pAYMMtmO7', title: 'Doton', category: ArtworkCategory.FULL_ILLUSTRATION, order: 19, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Aetherious%203rd%20finished.png?updatedAt=1776906078244' },
+    { id: 'GnIv4TVu6M0hqTHnzyxp', title: 'Eternal Bonding 2', category: ArtworkCategory.PORTRAIT, order: 20, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Wedding%202%20Main%20File.png?updatedAt=1776906076395' },
+    { id: 'siHhjv1U7M7caGCsrMAN', title: 'Pink', category: ArtworkCategory.PORTRAIT, order: 21, imageUrl: 'https://ik.imagekit.io/pcd7jjipb/Gallery/Occult%20Finished.png?updatedAt=1776906070374' },
 ];
