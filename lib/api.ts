@@ -66,8 +66,21 @@ export function loginWithGooglePopup(): Promise<void> {
       }
     };
 
-    const timer = window.setInterval(() => {
+    let checkingClosedPopup = false;
+    const timer = window.setInterval(async () => {
       if (popup.closed) {
+        if (checkingClosedPopup) return;
+        checkingClosedPopup = true;
+        try {
+          const user = await getAuthUser();
+          if (user?.isAdmin) {
+            cleanup();
+            resolve();
+            return;
+          }
+        } catch {
+          /* fall through to the original closed-window error */
+        }
         cleanup();
         reject(new Error('Login window closed'));
       }
@@ -136,12 +149,12 @@ export async function deleteVerifiedItem(id: string): Promise<void> {
   await request(`/verified/${id}`, { method: 'DELETE' });
 }
 
-export async function verifyArtwork(artworkId: string, turnstileToken: string): Promise<VerifiedArtwork | null> {
+export async function verifyArtwork(artworkId: string): Promise<VerifiedArtwork | null> {
   const res = await fetch(`${API_BASE}/verify`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ artworkId, turnstileToken }),
+    body: JSON.stringify({ artworkId }),
   });
   const data = (await res.json().catch(() => ({}))) as { artwork?: VerifiedArtwork; error?: string };
   if (res.status === 404) return null;

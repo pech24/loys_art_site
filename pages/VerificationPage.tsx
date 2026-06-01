@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Search, QrCode, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { verifyArtwork } from '../lib/api';
-import TurnstileWidget, { type TurnstileHandle } from '../components/TurnstileWidget';
 
 const VerificationPage: React.FC = () => {
   const [artworkId, setArtworkId] = useState('');
@@ -12,7 +11,6 @@ const VerificationPage: React.FC = () => {
   const [isQrLoading, setIsQrLoading] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const qrInputRef = useRef<HTMLInputElement>(null);
-  const turnstileRef = useRef<TurnstileHandle>(null);
   const hasAutoVerified = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,15 +21,8 @@ const VerificationPage: React.FC = () => {
     setResult(null);
     setVerifyError(null);
 
-    const token = turnstileRef.current?.getToken();
-    if (!token) {
-      setVerifyError('Please complete the security check below.');
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const foundArtwork = await verifyArtwork(idToVerify.trim(), token);
+      const foundArtwork = await verifyArtwork(idToVerify.trim());
       if (foundArtwork) {
         navigate('/certificate', { state: { artwork: foundArtwork } });
       } else {
@@ -40,10 +31,8 @@ const VerificationPage: React.FC = () => {
     } catch (error) {
       console.error('Verification error:', error);
       setVerifyError(error instanceof Error ? error.message : 'Verification failed');
-      setResult('not_found');
     } finally {
       setIsLoading(false);
-      turnstileRef.current?.reset();
     }
   }, [navigate]);
 
@@ -136,8 +125,6 @@ const VerificationPage: React.FC = () => {
                 className="w-full bg-white border border-ink/10 rounded-xl py-4 pl-12 pr-4 text-ink placeholder:text-ink/20 focus:outline-none focus:border-gold/50 transition-all font-mono"
               />
             </div>
-
-            <TurnstileWidget ref={turnstileRef} onExpire={() => setVerifyError('Security check expired. Please verify again.')} />
 
             {verifyError && <p className="text-sm text-deep-red text-center">{verifyError}</p>}
             

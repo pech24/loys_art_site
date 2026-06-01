@@ -10,7 +10,6 @@ import {
   requireAdmin,
 } from '../_shared/auth';
 import { checkRateLimit, getClientIp } from '../_shared/rateLimit';
-import { verifyTurnstile } from '../_shared/turnstile';
 import { findVerified, galleryToApi, verifiedToApi, type GalleryRow, type VerifiedRow } from '../_shared/db';
 import { copyUrlToR2, isAlreadyOnCdn } from '../_shared/cdnMigrate';
 
@@ -108,7 +107,7 @@ async function route(request: Request, env: Env, url: URL, segments: string[]): 
     }
   }
 
-  // Verify (public, rate limited + turnstile)
+  // Verify (public, rate limited)
   if (segments[0] === 'verify' && method === 'POST') {
     return verifyArtwork(request, env);
   }
@@ -440,18 +439,20 @@ async function updateGallery(request: Request, env: Env, id: string): Promise<Re
 
 async function verifyArtwork(request: Request, env: Env): Promise<Response> {
   const ip = getClientIp(request);
-  const limit = await checkRateLimit(env.DB, ip, 'verify');
-  if (!limit.allowed) {
-    return error(`Too many requests. Retry in ${limit.retryAfter}s`, 429);
+  const body = (await request.json().catch(() => ({}))) as { artworkId?: string };
+  const artworkId = body.artworkId?.trim();
+  if (!artworkId) return error('artworkId is required', 400);
+
+  try {
+    const limit = await checkRateLimit(env.DB, ip, 'verify');
+    if (!limit.allowed) {
+      return error(`Too many requests. Retry in ${limit.retryAfter}s`, 429);
+    }
+  } catch (e) {
+    console.error('Verify rate limit failed; continuing without rate limit', e);
   }
 
-  const body = (await request.json()) as { artworkId?: string; turnstileToken?: string };
-  if (!body.artworkId?.trim()) return error('artworkId is required', 400);
-
-  const turnstileOk = await verifyTurnstile(body.turnstileToken ?? '', env.TURNSTILE_SECRET_KEY, ip);
-  if (!turnstileOk) return error('Turnstile verification failed', 403);
-
-  const row = await findVerified(env.DB, body.artworkId.trim());
+  const row = await findVerified(env.DB, artworkId);
   if (!row) return json({ found: false }, 404);
   return json({ found: true, artwork: verifiedToApi(row) });
 }

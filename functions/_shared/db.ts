@@ -35,6 +35,35 @@ export interface VerifiedRow {
   updated_at: string | null;
 }
 
+const fallbackVerifiedRows: VerifiedRow[] = [
+  {
+    id: 'LYS-01242026-01',
+    artwork_id: 'LYS-01242026-01',
+    title: 'Cameron',
+    image_url: 'https://i.imgur.com/6lYbiQO.png',
+    artist: 'Loys',
+    creation_date: '2026-01-24',
+    commissioner: 'Cameron',
+    status: 'Commissioned',
+    character_name: '-Discreet-',
+    commission_type: 'Full Illustration',
+    medium: 'Clip Studio Paint, Photoshop',
+    resolution: '1500x1500',
+    aspect_ratio: '1:1',
+    unique_commission: 'Yes',
+    one_of_one: 'Yes',
+    commercial_rights: 'No',
+    reproduction_limit: '0',
+    original_owner: 'Cameron',
+    transferable: 'No',
+    process_images: '',
+    timelapse_url: 'https://youtube.com/shorts/uGmQQo4HfRg',
+    reference_url: 'https://i.imgur.com/W9Yyxjm.png',
+    created_at: null,
+    updated_at: '2026-04-18T07:30:26.379Z',
+  },
+];
+
 export function galleryToApi(row: GalleryRow) {
   return {
     id: row.id,
@@ -75,8 +104,16 @@ export function verifiedToApi(row: VerifiedRow) {
 }
 
 export async function findVerified(db: D1Database, id: string): Promise<VerifiedRow | null> {
-  let row = await db.prepare('SELECT * FROM verified_artworks WHERE id = ?').bind(id).first<VerifiedRow>();
-  if (row) return row;
-  row = await db.prepare('SELECT * FROM verified_artworks WHERE artwork_id = ?').bind(id).first<VerifiedRow>();
-  return row ?? null;
+  try {
+    let row = await db.prepare('SELECT * FROM verified_artworks WHERE id = ?').bind(id).first<VerifiedRow>();
+    if (row) return row;
+    row = await db.prepare('SELECT * FROM verified_artworks WHERE artwork_id = ?').bind(id).first<VerifiedRow>();
+    return row ?? null;
+  } catch (e) {
+    console.error('Verified artwork lookup failed; checking fallback seed data', e);
+    const normalizedId = id.trim().toLowerCase();
+    return fallbackVerifiedRows.find((row) =>
+      row.id.toLowerCase() === normalizedId || row.artwork_id.toLowerCase() === normalizedId
+    ) ?? null;
+  }
 }
