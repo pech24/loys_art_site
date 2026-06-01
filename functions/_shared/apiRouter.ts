@@ -13,12 +13,9 @@ import { checkRateLimit, getClientIp } from '../_shared/rateLimit';
 import { findVerified, galleryToApi, verifiedToApi, type GalleryRow, type VerifiedRow } from '../_shared/db';
 import { copyUrlToR2, isAlreadyOnCdn } from '../_shared/cdnMigrate';
 
-export const onRequest: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+export async function apiRequest(request: Request, env: Env, segments: string[]): Promise<Response> {
   const url = new URL(request.url);
   const origin = request.headers.get('Origin') ?? url.origin;
-  const path = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
-  const segments = path ? path.split('/') : [];
 
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders(origin) });
@@ -33,7 +30,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     console.error(e);
     return error('Internal server error', 500);
   }
-};
+}
 
 async function route(request: Request, env: Env, url: URL, segments: string[]): Promise<Response> {
   const method = request.method;
