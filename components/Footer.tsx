@@ -47,7 +47,7 @@ const Footer: React.FC = () => {
               &copy; {new Date().getFullYear()} Loys. All Rights Reserved.
             </p>
             <p className="text-white/30 text-[10px] uppercase tracking-[0.4em]">
-              v2.1
+              v3.0.0
             </p>
             <p className="text-white/20 text-xs italic">
               "Through the stars, we find our vision."
