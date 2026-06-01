@@ -26,7 +26,11 @@ self.addEventListener('install', (event) => {
             console.log('SW: Pre-caching static assets');
             const precacheLocal = cache.addAll(STATIC_ASSETS);
             const precacheExternal = Promise.all(
-                PRE_CACHE_CDN.map((url) => cache.add(new Request(url, { mode: 'no-cors' })))
+                PRE_CACHE_CDN.map((url) =>
+                    cache.add(new Request(url, { mode: 'no-cors' })).catch((error) => {
+                        console.warn('SW: Skipping pre-cache for external asset', url, error);
+                    })
+                )
             );
             return Promise.all([precacheLocal, precacheExternal]);
         })

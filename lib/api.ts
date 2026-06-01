@@ -113,7 +113,12 @@ export async function fetchGallery(params: {
   if (params.limit) search.set('limit', String(params.limit));
   if (params.cursor) search.set('cursor', params.cursor);
   const qs = search.toString();
-  return request(`/gallery${qs ? `?${qs}` : ''}`);
+  const data = await request<{ items?: GalleryItem[]; nextCursor?: string | null; hasMore?: boolean }>(`/gallery${qs ? `?${qs}` : ''}`);
+  return {
+    items: Array.isArray(data.items) ? data.items : [],
+    nextCursor: data.nextCursor ?? null,
+    hasMore: typeof data.hasMore === 'boolean' ? data.hasMore : false,
+  };
 }
 
 export async function fetchGalleryAdmin(): Promise<GalleryItem[]> {
